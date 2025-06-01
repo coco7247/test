@@ -5,8 +5,5 @@
       "src": "package.json",
       "use": "@vercel/next"
     }
-  ],
-  "env": {
-    "MONGODB_URI": "mongodb+srv://coco1887:Le4xWPVNRCzwbZDf@cluster0.mongodb.net/police_exam?retryWrites=true&w=majority"
-  }
+  ]
 } 
