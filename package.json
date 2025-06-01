@@ -1,5 +1,5 @@
 {
-  "name": "police-exam-simulator",
+  "name": "police-exam-system",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,18 +10,22 @@
   },
   "dependencies": {
     "@types/js-cookie": "^3.0.6",
-    "@types/node": "^20.11.19",
-    "@types/react": "^18.2.57",
-    "@types/react-dom": "^18.2.19",
-    "autoprefixer": "^10.4.17",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.0.1",
     "js-cookie": "^3.0.5",
-    "mongodb": "^6.16.0",
+    "mongodb": "^6.3.0",
     "mongoose": "^8.15.1",
     "next": "14.1.0",
-    "postcss": "^8.4.35",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "tailwindcss": "^3.4.1",
-    "typescript": "^5.3.3"
+    "postcss": "^8",
+    "react": "^18",
+    "react-dom": "^18",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5"
+  },
+  "devDependencies": {
+    "eslint": "^8",
+    "eslint-config-next": "14.1.0"
   }
 }

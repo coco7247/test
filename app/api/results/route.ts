@@ -1,38 +1,48 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
-import Result from '@/models/Result';
+import mongoose from 'mongoose';
+
+const resultSchema = new mongoose.Schema({
+  name: String,
+  examType: String,
+  answers: [String],
+  score: Number,
+  submittedAt: { type: Date, default: Date.now }
+});
+
+const Result = mongoose.models.Result || mongoose.model('Result', resultSchema);
 
 export async function GET() {
   try {
     await connectDB();
-    
-    const results = await Result.find()
-      .sort({ createdAt: -1 })
-      .limit(100);
-    
+    const results = await Result.find().sort({ submittedAt: -1 });
     return NextResponse.json(results);
   } catch (error) {
     console.error('Error fetching results:', error);
-    return NextResponse.json(
-      { error: '결과 조회 중 오류가 발생했습니다.' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    await connectDB();
-    
     const body = await request.json();
-    const result = await Result.create(body);
-    
-    return NextResponse.json(result, { status: 201 });
+    const { name, examType, answers, score } = body;
+
+    if (!name || !examType || !answers || score === undefined) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    await connectDB();
+    const result = await Result.create({
+      name,
+      examType,
+      answers,
+      score
+    });
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Error saving result:', error);
-    return NextResponse.json(
-      { error: '결과 저장 중 오류가 발생했습니다.' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 } 
