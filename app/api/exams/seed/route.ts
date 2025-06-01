@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import mongoose from 'mongoose';
 
+export const dynamic = 'force-dynamic';
+
 // MongoDB 연결
 const connectToDatabase = async () => {
   try {
