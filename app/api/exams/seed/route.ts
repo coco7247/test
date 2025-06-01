@@ -2,6 +2,17 @@ import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import mongoose from 'mongoose';
 
+// MongoDB 연결
+const connectToDatabase = async () => {
+  try {
+    await connectDB();
+  } catch (error) {
+    console.error('Failed to connect to database:', error);
+    throw new Error('Database connection failed');
+  }
+};
+
+// 시험 스키마 정의
 const examSchema = new mongoose.Schema({
   type: String,
   questions: [{
@@ -12,8 +23,10 @@ const examSchema = new mongoose.Schema({
   }]
 });
 
+// 모델 정의
 const Exam = mongoose.models.Exam || mongoose.model('Exam', examSchema);
 
+// 시험 데이터
 const examData = [
   {
     type: '순경',
@@ -70,7 +83,7 @@ const examData = [
 
 export async function GET() {
   try {
-    await connectDB();
+    await connectToDatabase();
     
     // 기존 데이터 삭제
     await Exam.deleteMany({});

@@ -2,6 +2,17 @@ import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import mongoose from 'mongoose';
 
+// MongoDB 연결
+const connectToDatabase = async () => {
+  try {
+    await connectDB();
+  } catch (error) {
+    console.error('Failed to connect to database:', error);
+    throw new Error('Database connection failed');
+  }
+};
+
+// 시험 스키마 정의
 const examSchema = new mongoose.Schema({
   type: String,
   questions: [{
@@ -12,6 +23,7 @@ const examSchema = new mongoose.Schema({
   }]
 });
 
+// 모델 정의
 const Exam = mongoose.models.Exam || mongoose.model('Exam', examSchema);
 
 export async function GET(request: Request) {
@@ -23,7 +35,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Exam type is required' }, { status: 400 });
     }
 
-    await connectDB();
+    await connectToDatabase();
     const exam = await Exam.findOne({ type });
 
     if (!exam) {
