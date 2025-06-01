@@ -1,6 +1,6 @@
 # 경찰 진급 시험 시스템
 
-경찰 진급 시험을 위한 온라인 시험 시스템입니다.
+온라인 경찰 진급 시험 시스템입니다.
 
 ## 주요 기능
 
@@ -28,7 +28,7 @@
 1. 저장소 클론
 ```bash
 git clone [repository-url]
-cd [repository-name]
+cd police-exam-system
 ```
 
 2. 의존성 설치
@@ -39,7 +39,8 @@ npm install
 3. 환경 변수 설정
 `.env.local` 파일을 생성하고 다음 내용을 추가:
 ```
-MONGODB_URI=your_mongodb_connection_string
+MONGODB_URI=your_mongodb_uri
+NEXT_PUBLIC_API_URL=http://localhost:3000/api
 ```
 
 4. 개발 서버 실행
@@ -54,4 +55,4 @@ npm run dev
 
 ## 라이선스
 
-MIT License 
+MIT 

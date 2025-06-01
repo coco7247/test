@@ -1,85 +1,88 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
 
-export default function AdminLoginPage() {
+function AdminLoginContent() {
+  const router = useRouter();
   const [adminId, setAdminId] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [error, setError] = useState('');
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (adminId === 'policea' && adminPassword === 'policep') {
-      try {
-        // 쿠키에 관리자 상태 저장 (24시간 유효)
-        Cookies.set('isAdmin', 'true', { expires: 1 });
-        router.push('/admin/results');
-      } catch (error) {
-        console.error('Navigation error:', error);
-        setError('페이지 이동 중 오류가 발생했습니다.');
-      }
+      Cookies.set('admin', 'true', { expires: 1 }); // 1일 동안 유효
+      router.push('/admin/results');
     } else {
-      setError('관리자 계정 정보가 올바르지 않습니다.');
+      setError('아이디 또는 비밀번호가 올바르지 않습니다.');
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">관리자 로그인</h1>
-          <p className="text-gray-600">관리자 계정으로 로그인하세요</p>
-        </div>
-
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h1 className="text-2xl font-bold text-center mb-6">관리자 로그인</h1>
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error}
           </div>
         )}
-
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+        <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="adminId" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="adminId" className="block text-gray-700 text-sm font-bold mb-2">
                 관리자 ID
               </label>
               <input
-                id="adminId"
                 type="text"
+                id="adminId"
                 value={adminId}
                 onChange={(e) => setAdminId(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                required
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="관리자 ID를 입력하세요"
               />
             </div>
             <div>
-              <label htmlFor="adminPassword" className="block text-sm font-medium text-gray-700">
-                관리자 비밀번호
+              <label htmlFor="adminPassword" className="block text-gray-700 text-sm font-bold mb-2">
+                비밀번호
               </label>
               <input
-                id="adminPassword"
                 type="password"
+                id="adminPassword"
                 value={adminPassword}
                 onChange={(e) => setAdminPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                required
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="비밀번호를 입력하세요"
               />
             </div>
           </div>
-
-          <div>
-            <button
-              type="submit"
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-            >
-              관리자 로그인
-            </button>
-          </div>
+          <button
+            type="submit"
+            className="w-full mt-6 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            로그인
+          </button>
         </form>
       </div>
     </div>
   );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">로딩 중...</p>
+        </div>
+      </div>
+    }>
+      <AdminLoginContent />
+    </Suspense>
+  );
+} 
 } 

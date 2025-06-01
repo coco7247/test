@@ -1,100 +1,115 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
 
-interface Result {
-  _id: string;
-  name: string;
-  examType: string;
-  score: number;
-  totalQuestions: number;
-  startTime: string;
-  endTime: string;
-  answers: Array<{
-    question: string;
-    userAnswer: string;
-    correctAnswer: string;
-    isCorrect: boolean;
-  }>;
-}
-
-export default function AdminResultsPage() {
-  const [results, setResults] = useState<Result[]>([]);
+function AdminResultsContent() {
+  const router = useRouter();
+  const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const router = useRouter();
 
   useEffect(() => {
-    // 관리자 인증 확인
-    const isAdmin = Cookies.get('isAdmin');
+    const isAdmin = Cookies.get('admin');
     if (!isAdmin) {
       router.push('/admin');
       return;
     }
+
+    const fetchResults = async () => {
+      try {
+        const response = await fetch('/api/results');
+        if (!response.ok) {
+          throw new Error('Failed to fetch results');
+        }
+        const data = await response.json();
+        setResults(data);
+      } catch (err) {
+        setError('결과를 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchResults();
   }, [router]);
 
   const handleLogout = () => {
-    Cookies.remove('isAdmin');
+    Cookies.remove('admin');
     router.push('/admin');
   };
 
-  const fetchResults = async () => {
-    try {
-      const response = await fetch('/api/results');
-      if (!response.ok) {
-        throw new Error('결과를 불러오는데 실패했습니다.');
-      }
-      const data = await response.json();
-      setResults(data);
-    } catch (error) {
-      setError('결과를 불러오는데 실패했습니다.');
-      console.error('Error fetching results:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleDownload = (result: any) => {
+    const content = `
+시험 결과
+---------
+응시자: ${result.name}
+시험 유형: ${result.examType}
+점수: ${result.score}/${result.totalQuestions}
+시작 시간: ${new Date(result.startTime).toLocaleString()}
+종료 시간: ${new Date(result.endTime).toLocaleString()}
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('ko-KR');
+답변 상세
+---------
+${result.answers.map((answer: any, index: number) => `
+문제 ${index + 1}: ${answer.question}
+제출한 답: ${answer.userAnswer}
+정답: ${answer.correctAnswer}
+정답 여부: ${answer.isCorrect ? 'O' : 'X'}
+`).join('\n')}
+    `;
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `exam_result_${result.name}_${new Date(result.endTime).toISOString()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-xl">로딩 중...</div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">결과를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500">{error}</p>
+          <button
+            onClick={() => router.push('/admin')}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            돌아가기
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-100 py-8">
+      <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">시험 결과 관리</h1>
-          <div className="space-x-4">
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-            >
-              로그아웃
-            </button>
-            <button
-              onClick={() => router.push('/')}
-              className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
-            >
-              홈으로
-            </button>
-          </div>
+          <h1 className="text-2xl font-bold text-gray-800">시험 결과 목록</h1>
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            로그아웃
+          </button>
         </div>
-
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
@@ -110,67 +125,34 @@ export default function AdminResultsPage() {
                   점수
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  시작 시간
+                  시험 시간
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  종료 시간
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  상세 보기
+                  작업
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {results.map((result) => (
-                <tr key={result._id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{result.name}</div>
+              {results.map((result, index) => (
+                <tr key={index}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {result.name}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{result.examType}</div>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {result.examType}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      {result.score} / {result.totalQuestions * 10}
-                    </div>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {result.score}/{result.totalQuestions}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{formatDate(result.startTime)}</div>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {new Date(result.startTime).toLocaleString()} ~ {new Date(result.endTime).toLocaleString()}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{formatDate(result.endTime)}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <button
-                      onClick={() => {
-                        const textContent = `시험 결과 상세
-이름: ${result.name}
-시험 유형: ${result.examType}
-점수: ${result.score}점
-시작 시간: ${formatDate(result.startTime)}
-종료 시간: ${formatDate(result.endTime)}
-
-답변:
-${result.answers.map((answer, index) => `
-${index + 1}. ${answer.question}
-답변: ${answer.userAnswer}
-정답: ${answer.correctAnswer}
-정답 여부: ${answer.isCorrect ? 'O' : 'X'}
-`).join('\n')}`;
-
-                        const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `시험결과_상세_${result.name}_${new Date().toLocaleDateString()}.txt`;
-                        document.body.appendChild(a);
-                        a.click();
-                        window.URL.revokeObjectURL(url);
-                        document.body.removeChild(a);
-                      }}
+                      onClick={() => handleDownload(result)}
                       className="text-blue-600 hover:text-blue-900"
                     >
-                      상세 보기
+                      다운로드
                     </button>
                   </td>
                 </tr>
@@ -180,5 +162,20 @@ ${index + 1}. ${answer.question}
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminResultsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">로딩 중...</p>
+        </div>
+      </div>
+    }>
+      <AdminResultsContent />
+    </Suspense>
   );
 } 
